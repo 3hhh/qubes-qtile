@@ -1,0 +1,16 @@
+# https://github.com/qtile/qtile/pull/5058
+
+--- site-packages/libqtile/group.py
++++ 2/libqtile/group.py
+@@ -265,8 +265,10 @@
+             self.tiled_windows.add(win)
+             for i in self.layouts:
+                 i.add_client(win)
+-        if focus:
++        if focus or not self.current_window:
+             self.focus(win, warp=True, force=force)
++        elif self.current_window:
++            self.focus(self.current_window, warp=False)
+ 
+     def remove(self, win, force=False):
+         self.windows.remove(win)

@@ -1,0 +1,14 @@
+#!/bin/bash
+# Simple interactive variant of `cal` (part of `util-linux`).
+# For use as e.g. qtile scratchpad.
+
+DEFAULT_ARGS="-w"
+
+#print current calendar as welcome
+cal "$DEFAULT_ARGS"
+
+while IFS= read -r -p "cal prompt: " line ; do
+  echo ""
+  cal $DEFAULT_ARGS $line
+  echo ""
+done

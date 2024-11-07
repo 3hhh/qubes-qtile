@@ -1,0 +1,139 @@
+#!/bin/bash
+#
+# qubes-qtile installer
+#
+# Copyright (C) 2024  David Hobach  LGPLv3
+# 0.5
+
+
+function errorOut {
+>&2 echo "ERROR: $1"
+>&2 echo "Aborting..."
+exit 1
+}
+
+#name of the directory this script resides in (hopefully)
+SCRIPT_DIR="$(readlink -f "${BASH_SOURCE[0]}")" || errorOut "Failed to execute readlink."
+SCRIPT_DIR="$(dirname "$SCRIPT_DIR")" || errorOut "Failed to execute dirname."
+
+#name of this script
+SCRIPT_NAME="${BASH_SOURCE[0]##*/}"
+
+#various install paths
+ENV_DIR="$SCRIPT_DIR/qtile-env"
+PKG_DIR="$SCRIPT_DIR/pkgs"
+UTIL_DIR="$SCRIPT_DIR/util"
+QTILE_BIN="/usr/bin/qtile"
+ICAL_BIN="/usr/bin/ical"
+XSESSION_DIR="/usr/share/xsessions"
+QTILE_XSESSION="$XSESSION_DIR/qtile.desktop"
+QTILE_CONF_DIR="/etc/xdg/qtile"
+
+function usage {
+echo "Usage: $SCRIPT_NAME install|uninstall|reinstall"
+exit 1
+}
+
+function isInstalled {
+[ -d "$ENV_DIR" ] || command -v qtile &> /dev/null || [ -d "$QTILE_CONF_DIR" ]
+}
+
+function installR {
+isInstalled && errorOut "qubes-qtile already appears to be installed. Either remove the existing installation manually beforehand or use the reinstall command. Reinstalling will overwrite $QTILE_CONF_DIR."
+
+echo "Creating the python venv..."
+python3 -m venv "$ENV_DIR" || errorOut "Failed to create the python venv."
+
+echo "Installing qtile inside the python venv..."
+source "$ENV_DIR/bin/activate" || errorOut "Failed to activate the python venv."
+cd "$PKG_DIR" || errorOut "Failed to switch to $PKG_DIR."
+
+#optional runtime dependencies
+pip3 install --no-index --find-links=. dbus* || errorOut "Failed to install dbus-next."
+
+#xcffib sometimes requires cffi to be installed beforehand
+pip3 install --no-index --find-links=. cffi* || errorOut "Failed to install cffi."
+
+pip3 install --no-index --find-links=. qtile* || errorOut "Failed to install qtile."
+deactivate || errorOut "Failed to deactivate the python venv."
+
+echo "Applying patches..."
+local patch
+for patch in "$SCRIPT_DIR/patches"/*.patch ; do
+	patch -s -p1 --directory "$ENV_DIR/lib"/python*/site-packages/ < "$patch" || errorOut "Failed to apply the patch $patch."
+done
+
+echo "Injecting qubes.py..."
+cp -f "$SCRIPT_DIR/qubes.py" "$ENV_DIR/lib"/python*/"site-packages/libqtile/"
+
+echo "Creating a symlink to $QTILE_BIN..."
+sudo ln -s "$ENV_DIR/bin/qtile" "$QTILE_BIN" || errorOut "Failed to create the symlink $QTILE_BIN."
+sudo ln -s "$UTIL_DIR/ical" "$ICAL_BIN" || errorOut "Failed to create the symlink $ICAL_BIN."
+
+echo "Creating $QTILE_CONF_DIR (NOTE: Use ~/.config/qtile/config.py for your custom configuration)..."
+sudo mkdir -p "$QTILE_CONF_DIR" || errorOut "Failed to create $QTILE_CONF_DIR."
+sudo cp -f "$SCRIPT_DIR/config.py" "$QTILE_CONF_DIR/config.py" || errorOut "Failed to copy the qtile configuration."
+sudo cp -f "$SCRIPT_DIR/autostart/"* "$QTILE_CONF_DIR/" || errorOut "Failed to copy the autostart files."
+sudo chown -R root:root "$QTILE_CONF_DIR" || errorOut "Failed to set the permissions on $QTILE_CONF_DIR."
+
+echo "Creating $QTILE_XSESSION..."
+sudo mkdir -p "$XSESSION_DIR" || errorOut "Failed to create $XSESSION_DIR."
+sudo cp -f "$SCRIPT_DIR/qtile.desktop" "$QTILE_XSESSION" || errorOut "Failed to copy $QTILE_XSESSION."
+sudo chown root:root "$QTILE_XSESSION" || errorOut "Failed to set the permissions on $QTILE_XSESSION."
+}
+
+function uninstallR {
+echo "Removing $QTILE_BIN..."
+sudo rm -f "$QTILE_BIN"
+
+echo "Removing $ICAL_BIN..."
+sudo rm -f "$ICAL_BIN"
+
+echo "Removing $QTILE_CONF_DIR..."
+sudo rm -rf "$QTILE_CONF_DIR"
+
+echo "Removing $QTILE_XSESSION..."
+sudo rm -f "$QTILE_XSESSION"
+
+echo "Removing $ENV_DIR..."
+rm -rf "$ENV_DIR"
+
+return 0
+}
+
+function reinstallR {
+uninstallR || errorOut "Failed to uninstall."
+installR
+}
+
+function main {
+[ $# -ne 1 ] && usage
+
+[ $EUID -eq 0 ] && errorOut "This script must not be run as root."
+
+#parse commands
+local cmd="$1"
+
+case "$cmd" in
+	install)
+	installR
+	;;
+
+	uninstall)
+	uninstallR
+	;;
+	
+	reinstall)
+	reinstallR
+	;;
+
+	*)
+	usage
+	;;
+esac
+
+echo "All done."
+exit 0
+}
+
+main "$@"
