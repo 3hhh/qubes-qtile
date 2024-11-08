@@ -1,0 +1,13 @@
+# https://github.com/tych0/qtile/commit/02d0bd42d49efd5e970ca0ca3e96db764024cbd5
+
+--- site-packages/libqtile/backend/x11/drawer.py
++++ site-packages/libqtile/backend/x11/drawer.py
+@@ -229,6 +229,8 @@
+         if height <= 0:
+             height = self.height
+ 
++        self._check_xcb()
++
+         # Using OPERATOR_CLEAR in a RecordingSurface does not clear the
+         # XCBSurface so we clear the XCBSurface directly.
+         with cairocffi.Context(self._xcb_surface) as ctx:
