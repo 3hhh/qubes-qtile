@@ -1,7 +1,7 @@
 # https://github.com/qtile/qtile/pull/5058
 
 --- site-packages/libqtile/group.py
-+++ 2/libqtile/group.py
++++ site-packages/libqtile/group.py
 @@ -265,8 +265,10 @@
              self.tiled_windows.add(win)
              for i in self.layouts:
