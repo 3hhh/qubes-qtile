@@ -1,4 +1,4 @@
-# https://github.com/tych0/qtile/commit/02d0bd42d49efd5e970ca0ca3e96db764024cbd5
+# https://github.com/qtile/qtile/pull/5075
 
 --- site-packages/libqtile/backend/x11/drawer.py
 +++ site-packages/libqtile/backend/x11/drawer.py
