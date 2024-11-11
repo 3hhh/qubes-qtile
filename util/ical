@@ -2,7 +2,7 @@
 # Simple interactive variant of `cal` (part of `util-linux`).
 # For use as e.g. qtile scratchpad.
 
-DEFAULT_ARGS="-w"
+DEFAULT_ARGS="-wm"
 
 #print current calendar as welcome
 cal "$DEFAULT_ARGS"
