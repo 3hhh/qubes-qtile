@@ -20,90 +20,47 @@
 #
 
 import asyncio
-import re
-import time
-import subprocess
 
 from libqtile import hook
 from libqtile.widget import TaskList
 from libqtile.confreader import ConfigError
 from qtile_extras.layout.decorations import ConditionalBorder #https://qtile-extras.readthedocs.io/en/stable/manual/ref/borders.html
 
-class QubesPropertyCache():
-    ''' Cache Qubes OS VM properties provided via `qvm-ls`.
-    '''
-
-    def __init__(self, prop='label', timeout=600):
-        ''' Init.
-        :param property: Name of the property to cache.
-        :param timeout: Time in seconds after which to definitely refresh the cache.
-        '''
-        self.prop = prop
-        self.timeout = timeout
-        self.vms = {}
-        self.last = 0 #unix timestamp of last update
-        self.update(force=True)
-
-    def get(self, vm, default=None, error=None):
-        ''' Get the property for the given VM.
-        :param vm: VM name.
-        :param default: Returned, if nothing was found and no error occurred.
-        :param error: Returned on unexpected errors.
-        :return: Property string or the default, if not found.
-        '''
-        try:
-            self.update(try_vm=vm)
-        except (subprocess.TimeoutExpired, subprocess.CalledProcessError):
-            return error
-        return self.vms.get(vm, default)
-
-    def _update(self):
-        ret = subprocess.run(['qvm-ls', '--raw-data', '-O', f'name,{self.prop}'],
-                timeout=10, check=True, capture_output=True, encoding='UTF-8')
-
-        for line in ret.stdout.splitlines():
-            data = line.split('|')
-            self.vms[data[0]] = data[1]
-
-        self.last = time.time()
-        return True
-
-    def update(self, force=False, try_vm=None):
-        ''' Update the cache, if necessary.
-        :param force: Skip the necessity check.
-        :param try_vm: Check whether this VM is available in our data and if so, skip the update.
-        :return: Whether or not an update was executed.
-        '''
-        if not force:
-            diff = time.time() - self.last
-            if diff < self.timeout and diff > 0 \
-                and ( try_vm is None or self.vms.get(try_vm) is not None):
-                return False
-        return self._update()
-
-QUBES_CACHE = QubesPropertyCache()
+# _QUBES_LABEL xprop definitions
+QUBES_IND2LABEL = {
+    0: 'black',
+    1: 'red',
+    2: 'orange',
+    3: 'yellow',
+    4: 'green',
+    5: 'gray',
+    6: 'blue',
+    7: 'purple',
+}
 
 def get_vm_name(client):
     ''' Get the VM name for a client.
-    :return: VM name string or None, if it couldn't be identified (usually dom0). If such a VM doesn't exist, it's usually dom0 as well.
+    :return: VM name string or None, if it couldn't be identified (usually dom0).
     '''
-    #NOTES:
-    # - as per https://github.com/QubesOS/qubes-gui-daemon/blob/89d0254683a904485dc04e526cb75d4be4957417/gui-daemon/xside.c#L2934 this should be safe to use
-    # - characters allowed in VM names: https://github.com/QubesOS/qubes-core-admin/blob/main/qubes/vm/__init__.py#L65
-    match = re.match(r'^([a-zA-Z][a-zA-Z0-9_.-]*):.*$', client.get_wm_class()[0])
-    if match:
-        return match.group(1)
+    prop = client.window.get_property('_QUBES_VMNAME', 'STRING')
+    if prop:
+        return prop.value.to_string()
     return None
 
-def get_border_color(client, error=None, dom0='black'):
+def get_border_color_index(client, default=None):
+    prop = client.window.get_property('_QUBES_LABEL', 'CARDINAL')
+    if prop:
+        return int.from_bytes(prop.value[0])
+    return default
+
+def get_border_color(client, dom0='black'):
     ''' Get the border color for a client.
-    :param error: Returned on unexpected errors.
     :param dom0: Returned for dom0 windows.
     :return: Border color as string, e.g. 'green'.
     '''
-    vm_name = get_vm_name(client)
-    if vm_name:
-        return QUBES_CACHE.get(vm_name,default='black',error=error)
+    ind = get_border_color_index(client)
+    if ind:
+        return QUBES_IND2LABEL[ind]
     return dom0
 
 class QubesBorder(ConditionalBorder):
