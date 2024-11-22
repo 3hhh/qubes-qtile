@@ -225,12 +225,12 @@ mouse = [
 ]
 
 dgroups_key_binder = None
-dgroups_app_rules = []  # type: list
+dgroups_app_rules = []
 follow_mouse_focus = False
-bring_front_click = True
-floats_kept_above = False
+bring_front_click = False #NOTE: this bypasses override-redirect window stacking, i.e. enabling this breaks e.g. firefox context menus
+floats_kept_above = True
 cursor_warp = False
-floating_layout = layout.Floating( #NOTE: this cannot be disabled, so we better configure it properly
+floating_layout = layout.Floating( #NOTE: this cannot be disabled, so we better configure it properly (it doesn't apply to override-redirect windows)
     border_width = border_width,
     fullscreen_border_width = border_width,
     max_border_width = border_width,
@@ -239,6 +239,7 @@ floating_layout = layout.Floating( #NOTE: this cannot be disabled, so we better 
     float_rules=[
         # Run the utility of `xprop` to see the wm class and name of an X client.
         *layout.Floating.default_float_rules,
+        Match(func=lambda c: bool(c.is_transient_for())), #these are usually context menus, menu bars, ...
         Match(wm_class="confirmreset"),  # gitk
         Match(wm_class="makebranch"),  # gitk
         Match(wm_class="maketag"),  # gitk
