@@ -28,7 +28,6 @@ from qtile_extras.layout.decorations import ConditionalBorder #https://qtile-ext
 
 # _QUBES_LABEL xprop definitions
 QUBES_IND2LABEL = {
-    0: 'black',
     1: 'red',
     2: 'orange',
     3: 'yellow',
@@ -36,6 +35,7 @@ QUBES_IND2LABEL = {
     5: 'gray',
     6: 'blue',
     7: 'purple',
+    8: 'black',
 }
 
 def get_vm_name(client):
