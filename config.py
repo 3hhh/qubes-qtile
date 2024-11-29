@@ -108,6 +108,9 @@ def focus_next():
 def decide_focus(win):
     global FOCUS_NEXT
 
+    if not qtile.current_window: #empty screen
+        return True
+
     if FOCUS_NEXT:
         FOCUS_NEXT = False
         return True
