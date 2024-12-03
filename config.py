@@ -105,21 +105,20 @@ def focus_next():
     global FOCUS_NEXT
     FOCUS_NEXT = True
 
+#never let any new client steal focus unless explicitly allowed via decide_focus()
+@hook.subscribe.client_new
 def decide_focus(win):
     global FOCUS_NEXT
 
     if not qtile.current_window: #empty screen
-        return True
+        return
 
     if FOCUS_NEXT:
         FOCUS_NEXT = False
-        return True
-    return False
+        return
 
-#never let any new client steal focus unless explicitly allowed via decide_focus()
-@hook.subscribe.client_new
-def prevent_focus_steal(client):
-    client.__class__.can_steal_focus = property(decide_focus)
+    #default: disallow focus steal from this window
+    win.can_steal_focus = False
 
 #position cursor in the middle on first startup
 @hook.subscribe.startup_once
