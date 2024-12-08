@@ -77,11 +77,11 @@ By default `qtile` passes the focus to newly created windows. We can disable tha
 
 ```python
 @hook.subscribe.client_new
-def prevent_focus_steal(client):
-    client.__class__.can_steal_focus = property(lambda self : False)
+def decide_focus(win):
+    win.can_steal_focus = False
 ```
 
-The `config.py` shipped with this repository provides a slightly more complex variant, which allows a focus steal for a set of pre-defined windows.
+The `config.py` shipped with this repository provides a slightly more complex variant, which allows a focus steal under certain circumstances.
 
 ##### Disable sloppy focus
 
