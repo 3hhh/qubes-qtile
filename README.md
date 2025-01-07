@@ -8,7 +8,7 @@ Installation is generally expected in dom0 as [GUI VM](https://www.qubes-os.org/
 
 1. Install some dependencies in your GUI VM: `sudo qubes-dom0-update pango python3-pip dex-autostart google-noto-sans-mono-fonts` (command for dom0 as GUI VM)
 2. Download this repository in a VM and switch to its directory via e.g. `cd qubes-qtile`.
-3. (Optional) Download a current or more trustworthy version of `qtile` and its dependencies via `rm -f pkgs/* && pip3 download --destination-directory ./pkgs qtile qtile-extras dbus-next`.
+3. (Optional) Download a current or more trustworthy version of `qtile` and its dependencies via `rm -f pkgs/* && pip3 download --destination-directory ./pkgs qtile qtile-extras dbus-fast`.
 4. Move the repository to your GUI VM, e.g. to `~/qubes-qtile`, and make sure the directory persists across VM restarts.
 5. Run `~/qubes-qtile/installer install`.
 6. Choose `qtile` as window manager in `lightdm` the next time you login.

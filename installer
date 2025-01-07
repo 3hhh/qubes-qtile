@@ -49,7 +49,7 @@ source "$ENV_DIR/bin/activate" || errorOut "Failed to activate the python venv."
 cd "$PKG_DIR" || errorOut "Failed to switch to $PKG_DIR."
 
 #optional runtime dependencies
-pip3 install --no-index --find-links=. dbus* || errorOut "Failed to install dbus-next."
+pip3 install --no-index --find-links=. dbus* || errorOut "Failed to install dbus-fast."
 
 #xcffib sometimes requires cffi to be installed beforehand
 pip3 install --no-index --find-links=. cffi* || errorOut "Failed to install cffi."
@@ -60,6 +60,7 @@ deactivate || errorOut "Failed to deactivate the python venv."
 echo "Applying patches..."
 local patch
 for patch in "$SCRIPT_DIR/patches"/*.patch ; do
+	[[ "$patch" == *"/*.patch" ]] && break
 	patch -s -p1 --directory "$ENV_DIR/lib"/python*/site-packages/ < "$patch" || errorOut "Failed to apply the patch $patch."
 done
 
