@@ -76,8 +76,8 @@ Users may want to adjust their definitions and respective implementations accord
 By default `qtile` passes the focus to newly created windows. We can disable that via:
 
 ```python
-@hook.subscribe.client_new
-def decide_focus(win):
+@hook.subscribe.group_window_add
+def decide_focus(group, win):
     win.can_steal_focus = False
 ```
 
@@ -97,6 +97,6 @@ This can easily be set via `focus_on_window_activation = "never"`.
 
 ## Copyright
 
-© 2024 David Hobach
+© 2025 David Hobach
 
 qubes-qtile is released under the GPLv3 license; see `LICENSE` for details.

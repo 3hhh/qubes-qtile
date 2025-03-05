@@ -106,8 +106,8 @@ def focus_next():
     FOCUS_NEXT = True
 
 #never let any new client steal focus unless explicitly allowed via decide_focus()
-@hook.subscribe.client_new
-def decide_focus(win):
+@hook.subscribe.group_window_add
+def decide_focus(group, win):
     global FOCUS_NEXT
 
     if not qtile.current_window: #empty screen

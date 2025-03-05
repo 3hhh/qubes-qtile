@@ -1,0 +1,54 @@
+#https://github.com/qtile/qtile/issues/5199
+
+index 925be7a5..aa8be8df 100644
+--- a/libqtile/core/manager.py
++++ b/libqtile/core/manager.py
+@@ -735,7 +735,7 @@ class Qtile(CommandObject):
+         if self.current_screen and isinstance(win, base.Window):
+             # Window may have been bound to a group in the hook.
+             if not win.group and self.current_screen.group:
+-                self.current_screen.group.add(win, focus=win.can_steal_focus)
++                self.current_screen.group.add(win)
+ 
+         hook.fire("client_managed", win)
+ 
+diff --git a/libqtile/group.py b/libqtile/group.py
+index 044ec842..3897ca30 100644
+--- a/libqtile/group.py
++++ b/libqtile/group.py
+@@ -251,7 +251,7 @@ class _Group(CommandObject):
+             screen=self.screen.index if self.screen else None,
+         )
+ 
+-    def add(self, win, focus=True, force=False):
++    def add(self, win, force=False):
+         hook.fire("group_window_add", self, win)
+         if win not in self.windows:
+             self.windows.append(win)
+@@ -266,7 +266,7 @@ class _Group(CommandObject):
+             self.tiled_windows.add(win)
+             for i in self.layouts:
+                 i.add_client(win)
+-        if focus:
++        if win.can_steal_focus:
+             self.focus(win, warp=True, force=force)
+         else:
+             self.layout_all(focus=False)
+diff --git a/libqtile/widget/prompt.py b/libqtile/widget/prompt.py
+index 500dea87..a35e7262 100644
+--- a/libqtile/widget/prompt.py
++++ b/libqtile/widget/prompt.py
+@@ -408,11 +408,11 @@ class Prompt(base._TextBox):
+             if self.active and not win == self.bar.window:
+                 self._unfocus()
+ 
+-        def prevent_focus_steal(win):
++        def prevent_focus_steal(group, win):
+             if self.active:
+                 win.can_steal_focus = False
+ 
+-        hook.subscribe.client_new(prevent_focus_steal)
++        hook.subscribe.group_window_add(prevent_focus_steal)
+         hook.subscribe.client_focus(f)
+ 
+         # Define key handlers (action to do when a specific key is hit)
