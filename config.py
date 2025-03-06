@@ -113,6 +113,9 @@ def decide_focus(group, win):
     if not qtile.current_window: #empty screen
         return
 
+    if win.is_transient_for() and qtile.current_window == win.is_transient_for(): #subwindow
+        return
+
     if FOCUS_NEXT:
         FOCUS_NEXT = False
         return
