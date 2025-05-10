@@ -123,6 +123,11 @@ def decide_focus(group, win):
     #default: disallow focus steal from this window
     win.can_steal_focus = False
 
+#even if a focus steal was allowed, make sure it isn't allowed forever
+@hook.subscribe.client_managed
+def disallow_focus_steal(win):
+    win.can_steal_focus = False
+
 #position cursor in the middle on first startup
 @hook.subscribe.startup_once
 def warp_screen():
