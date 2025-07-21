@@ -28,6 +28,7 @@
 #IMPORTANT: logs can be found at ~/.local/share/qtile/qtile.log
 
 import re
+import subprocess
 
 from libqtile import bar, layout, qtile, widget, hook
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
@@ -75,8 +76,8 @@ keys = [
     Key([mod], "q", lazy.spawn("screenlock"), desc="Launch screen locker"),
     Key([mod], "e", lazy.spawn("qidled unpauseAllActiveWindows"), desc="Unpause active windows"),
     Key([mod], "Print", lazy.spawn("mkdir -p ~/screenshots && maim ~/screenshots/$(date +%s).png", shell=True), desc="Take a screenshot"), #requires maim in dom0
-    #raise & lower volume, mute (requires qubes-wpctl - https://github.com/3hhh/qubes-terminal-hotkeys/tree/master/util)
-    Key([mod], "F7", lazy.spawn("qubes-wpctl toggle dom0"), desc="Toggle mute status"),
+    #raise & lower volume, mute - requires qubes-wpctl (https://github.com/3hhh/qubes-terminal-hotkeys/tree/master/util) & blib (https://github.com/3hhh/blib) in dom0
+    Key([mod], "F7", lazy.spawn("qubes-wpctl toggle default"), desc="Toggle mute status"),
     Key([mod], "F8", lazy.spawn("qubes-wpctl volumeOut 5%-"), desc="Decrease volume"),
     Key([mod], "F9", lazy.spawn("qubes-wpctl volumeOut 5%+"), desc="Increase volume"),
     Key([mod], "F11", lazy.spawn("qubes-wpctl switchOut"), desc="Switch audio sink"),
@@ -197,6 +198,27 @@ def open_ical():
     focus_next()
     qtile.spawn('terminal -e ical') #for whatever reason lazy doesn't work here!
 
+if subprocess.call('qubes-prefs default_audiovm', shell=True) == 'dom0':
+    vol_widget = widget.Volume(
+        fmt=r'Vol: {}',
+        mute_format=r'<span color="yellow">M</span>',
+        unmute_format=r'<span color="lime">{volume}%</span>',
+        )
+else:
+    #a non-dom0 audio VM currently requires qubes-wpctl (https://github.com/3hhh/qubes-terminal-hotkeys/tree/master/util) & blib (https://github.com/3hhh/blib) in dom0 for the volume widget
+    vol_widget = widget.Volume(
+        fmt=r'Vol: {}',
+        mute_format=r'<span color="yellow">M</span>',
+        unmute_format=r'<span color="lime">{volume}%</span>',
+        check_mute_command=r'qubes-wpctl printDefault | grep -E "^Out: .*MUTED.*$" &> /dev/null && echo "[off]"',
+        get_volume_command=r'qubes-wpctl printDefault | sed -rn "s/Out: .*\[vol: ([0-9]+)\.([0-9]+)\]$/\1\2%/p"',
+        mute_command=r'qubes-wpctl toggle default',
+        volume_up_command=r'qubes-wpctl volumeOut 5%+',
+        volume_down_command=r'qubes-wpctl volumeOut 5%-',
+        volume_app=r'qubes-wpctl app',
+        update_interval=30,
+        )
+
 screens = [ Screen(
         top=bar.Bar(
             [
@@ -211,7 +233,7 @@ screens = [ Screen(
                 widget.Systray(),
                 widget.Battery(format='Bat({char}): {percent:2.0%} {hour:d}:{min:02d}h {watt:.2f}W', show_short_text=False),
                 widget.Sep(padding=10),
-                widget.Volume(fmt='Vol: {}', mute_format='<span color="yellow">M</span>', unmute_format='<span color="lime">{volume}%</span>'),
+                vol_widget,
                 widget.Sep(padding=10),
                 widget.Clock(format="%a %b %d %H:%M:%S", mouse_callbacks={'Button1': open_ical}),
                 widget.CurrentLayoutIcon(),
