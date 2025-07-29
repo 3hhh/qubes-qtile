@@ -28,7 +28,7 @@
 #IMPORTANT: logs can be found at ~/.local/share/qtile/qtile.log
 
 import re
-import subprocess
+#import subprocess
 
 from libqtile import bar, layout, qtile, widget, hook
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
@@ -224,7 +224,7 @@ screens = [ Screen(
                 #vol_widget,
                 #widget.Sep(padding=10),
                 widget.Clock(format="%a %b %d %H:%M:%S", mouse_callbacks={'Button1': open_ical}),
-                widget.CurrentLayoutIcon(),
+                widget.CurrentLayout(mode='icon'),
             ],
             24,
             # border_width=[2, 0, 2, 0],  # Draw top and bottom borders
@@ -270,6 +270,7 @@ floating_layout = layout.Floating( #NOTE: this cannot be disabled, so we better 
 )
 auto_fullscreen = False
 focus_on_window_activation = "never"
+focus_previous_on_window_remove = False
 reconfigure_screens = True
 
 # If things like steam games want to auto-minimize themselves when losing
