@@ -116,6 +116,13 @@ def decide_focus(group, win):
 def disallow_focus_steal(win):
     win.can_steal_focus = False
 
+#focus an existing window on group switches & qtile restarts, if no other window is focused
+@hook.subscribe.setgroup
+@hook.subscribe.startup
+def focus_if_none():
+    if not qtile.current_window:
+        qtile.current_layout.next()
+
 #position cursor in the middle on first startup
 @hook.subscribe.startup_once
 def warp_screen():
