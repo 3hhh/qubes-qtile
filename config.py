@@ -123,6 +123,25 @@ def focus_if_none():
     if not qtile.current_window:
         qtile.current_layout.next()
 
+#limit the size of floating windows to 90% of the screen size to prevent them from luring the user into entering trusted data
+@hook.subscribe.client_managed
+@hook.subscribe.client_focus #client_managed doesn't seem to suffice, so better call it again later on focus
+def limit_float_size(win):
+    if not win.floating:
+        return
+
+    screen = win.group.screen
+    if screen is None:
+        return
+
+    max_width = int(screen.width * 0.9)
+    max_height = int(screen.height * 0.9)
+    width = min(win.width, max_width)
+    height = min(win.height, max_height)
+
+    if win.width > width or win.height > win.height:
+        win.set_size_floating(width, height)
+
 #position cursor in the middle on first startup
 @hook.subscribe.startup_once
 def warp_screen():
